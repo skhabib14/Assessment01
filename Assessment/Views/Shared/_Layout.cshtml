@@ -1,0 +1,157 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Assessment</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.rawgit.com/davidstutz/bootstrap-multiselect/master/dist/css/bootstrap-multiselect.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Assessment</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse"
+                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home"
+                                asp-action="Privacy">Privacy</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2021 - Assessment - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script type="text/javascript"
+        src="https://cdn.rawgit.com/davidstutz/bootstrap-multiselect/master/dist/js/bootstrap-multiselect.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#movieName').autocomplete({
+                source: '/api/MovieAPI/search',
+                select: function( event, ui ) {
+                    $( "#movieName" ).val( ui.item.title );
+                    GetMovieList();
+                    return false;
+                    }
+                })
+                .autocomplete("instance")._renderItem = function (ul, item) {
+                    return $("<li>")
+                        .append("<div>" + item.title + "<br>" + getStars(item.rating) + "<span style='float:right;'>"+item.category+"</span></div>")
+                        .appendTo(ul);
+                };
+
+            $('#movieName').bind('input', function() {
+               GetMovieList();
+            });
+        });
+        function getStars(count) {
+            var returnHtml = "";
+            roundCount = Math.floor(count);
+            console.log(roundCount);
+            for (a = 0; a < roundCount; a++) {
+                returnHtml += " <i class='fa fa-star'></i>"
+            }
+            if(roundCount < count) {
+                returnHtml += " <i class='fa fa-star-half-empty'></i>"
+            }
+            return returnHtml
+        }
+        function setSearchText(element, text) {
+            //$('#movieName').val(text);
+            console.log(text);
+            document.getElementById("movieName").value = text;
+        }
+    </script>
+
+    <script type="text/javascript">
+        $(function () {
+            GetMovieList();
+            @* $("#movieName").keypress(function () {
+                GetMovieList();
+            }); *@
+
+            $("#ratingDDL").on('change', function () {
+                GetMovieList();
+            });
+
+            $("#genre").on('change', function () {
+                GetMovieList();
+            });
+        });
+        function GetMovieList() {            
+            var movieName = $.trim($("#movieName").val());            
+            var ratingDDL = $("#ratingDDL").val();
+            ratingDDL = ratingDDL.toString()
+            var genre = $.trim($("#genre").val());
+
+            $.ajax({
+                type: "GET",
+                url: "/api/MovieAPI/MovieList",
+                data: { 'title': movieName, 'rating': ratingDDL, 'category': genre },
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: function (movies) {
+                    var table = $("#MovieList");
+                    table.find("tr:not(:first)").remove();
+                    $.each(movies, function (i, movie) {
+                        var table = $("#MovieList");
+                        var row = table[0].insertRow(-1);
+                        $(row).append("<td />");
+                        $(row).find("td").eq(0).html(movie.title);
+                        $(row).append("<td />");
+                        $(row).find("td").eq(1).html(movie.rating);
+                        $(row).append("<td />");
+                        $(row).find("td").eq(2).html(movie.category);
+                    });
+                }
+            });
+        }
+    </script>
+
+    <script type="text/javascript">
+        $(function () {
+            $('#ratingDDL').multiselect({
+                includeSelectAllOption: true
+            });
+        });
+        $(function () {
+            $('#genre').multiselect({
+                includeSelectAllOption: true
+            });
+        });
+    </script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+
+</html>
